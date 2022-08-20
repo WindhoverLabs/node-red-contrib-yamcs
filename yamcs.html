@@ -88,7 +88,15 @@
         <label for="node-input-command"><i class="fa fa-dot-circle-o"></i> Command</label>
         <select id="node-input-command">
            <option value="1">GetInstances</option>
+           <option value="2">GetParameter</option>
+        </select>
     </div>
+
+    <script>
+        $('#node-input-command').on('change', function() {
+            console.log("Selected " + this.value);
+        });  
+    </script>
 </script>
 
 <script type="text/x-red" data-help-name="YAMCS">
