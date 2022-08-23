@@ -1,3 +1,5 @@
+<script src='https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.7.7/handlebars.min.js'></script>
+
 <script type="text/javascript">
     RED.nodes.registerType('yamcsconfig',{
         category: 'config',
@@ -5,7 +7,7 @@
             name: {value:""},
             ip: {value:"", required: true},
             port: {value:8090, validate:RED.validators.number()},
-            instances: {value:"default"}
+            instance: {value:"default"}
         },
         credentials: {
             username: {type:"text"},
@@ -16,6 +18,93 @@
         }
     });
 </script>
+
+
+<script id="yamcs-get-parameter" type="text/x-handlebars-template">
+   <label for="node-get-parameter-id"><i class="fa fa-server"></i> ID</label>
+   <input type="text" id="node-get-parameter-id" placeholder="" list="node-get-parameter-id-list">
+   <datalist id="node-get-parameter-id-list">
+   </datalist>
+
+
+
+    <script>
+        $('#node-get-parameter-id').on('input', function() {
+            if(this.value.length >= 0) {
+	            getParameters(this.value, "localhost", 8090, "fsw", null);
+            };
+        });
+
+        function parseMember(path, member) {
+	        var params = [];
+	        if(member.hasOwnProperty('type')) {
+		        if(member.type.hasOwnProperty('engType')) {
+			        switch(member.type.engType) {
+			            case 'aggregate': {
+				            path = path + '.' + member.name;
+    				        for(let nextMember of member.type.member) {
+				                params = params.concat(parseMember(path + "." + nextMember.name, nextMember));
+                            }
+                            break;
+                        }
+                        default: {
+				            params.push(path);
+                        }
+                    }
+                }
+	        } else {
+                //params.push(path);
+            }	
+
+            return params;
+        }
+
+
+        function getParameters(searchText, address, port, instance, continuationToken) {
+            var parameters = {};
+            var url = "http://" + address + ":" + port + "/api/mdb/" + instance + "/parameters?searchMembers=true&q=" + searchText;
+
+            if(continuationToken !== null) {
+                url += "&next=" + continuationToken;	
+            }
+
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.addEventListener("load", function () {
+	            var jsonObject = JSON.parse(this.responseText);
+	            parameters = Object.assign(parameters, jsonObject);
+                if(jsonObject.hasOwnProperty('continuationToken')) {
+		            getParameters(searchText, address, port, instance, jsonObject.continuationToken);
+	            } else {
+		            var paramNames = [];
+                    if(parameters.hasOwnProperty("parameters")) {
+                        for(let parameter of parameters.parameters) {
+	                        if(parameter.hasOwnProperty("type")) {
+    	                        if(parameter.type.hasOwnProperty("member")) {
+                                    for(let member of parameter.type.member) {
+	                                    paramNames = paramNames.concat(parseMember(parameter.qualifiedName, member));
+                                    }
+                                }
+                            }
+                        }
+                    }
+ 
+                    var paramOptions = "";
+                    for (var i = 0; i < paramNames.length; i++) {
+	                    if(paramNames[i].startsWith(searchText)) {
+		                    paramOptions = paramOptions + "<option value='" + paramNames[i] + "'>";
+                        }
+                    }
+
+                    $('#node-get-parameter-id-list').html(paramOptions);
+	            }
+            });
+            xmlHttp.open( "GET", url);
+            xmlHttp.send( null );
+        }
+
+    </script>
+</script>
+
 
 <script type="text/x-red" data-template-name="yamcsconfig">
     <div class="form-row">
@@ -66,6 +155,8 @@
             switch(this.command.toString()){
                 case '1':
                     return 'YAMCS: getInstances';
+                case '2':
+                    return 'YAMCS: getParameters';
                 default:
                     return 'YAMCS';
             }
@@ -89,12 +180,45 @@
         <select id="node-input-command">
            <option value="1">GetInstances</option>
            <option value="2">GetParameter</option>
+           <option value="3">GetParameters</option>
         </select>
+        <div id="node-input-args">
+           123
+        </div>
     </div>
 
     <script>
         $('#node-input-command').on('change', function() {
-            console.log("Selected " + this.value);
+            $('#node-input-args').html('');
+            switch(this.value) {
+	            case "1": {
+		            $('#node-input-args').html('Hello');
+		            break;
+                }
+
+                case "2": {
+                    // Retrieve the template data from the HTML (jQuery is used here).
+                    var template = $('#yamcs-get-parameter').html();
+
+                    // Compile the template data into a function
+                    var templateScript = Handlebars.compile(template);
+
+                    var context = { "name" : "Ritesh Kumar", "occupation" : "developer" };
+
+                    // html = 'My name is Ritesh Kumar. I am a developer.'
+                    var html = templateScript(context);
+
+                    // Insert the HTML code into the page
+                    $('#node-input-args').html(html);
+
+
+	                break;
+                }
+
+                default: {
+	                console.log("Illegal selection");
+                }
+            }
         });  
     </script>
 </script>

@@ -23,7 +23,11 @@ module.exports = function (RED) {
         let {username, password, instance, ip, port} = nodeServer;
         let {command} = config;
 
-        const server = new yamcs.Server(ip, port);
+        const server = new yamcs.Server(ip, port, instance);
+
+        server.getParameters(instance, '/cfs/cpd/core/cfe/cfe_es', null, function (err, result) {
+	        //console.log(result);
+        });
 
         this.on('input', function (msg) {
 
@@ -59,6 +63,17 @@ module.exports = function (RED) {
                     case 'getinstances':
                         server.getInstances(handleDataCallback);
                         break;
+
+                    case '2':
+                    case 'getparameter':
+                        server.getParameter(handleDataCallback);
+                        break;
+
+                    case '3':
+                    case 'getparameters':
+                        server.getParameters(instance, null, null, handleDataCallback);
+                        break;
+
                     default:
                         //server.logout();
                         node.status({
@@ -101,7 +116,9 @@ module.exports = function (RED) {
         this.instance = n.instance;
         this.username = this.credentials.username;
         this.password = this.credentials.password;
+
     }
+
     
     RED.nodes.registerType("yamcsconfig", yamcsConfigNode,{
         credentials: {
