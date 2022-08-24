@@ -1,0 +1,78 @@
+[
+    {
+        "id": "bafd1fad12fa5e2a",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "bc4f76e611439ce9",
+        "type": "yamcsconfig",
+        "name": "FSW",
+        "ip": "localhost",
+        "port": "8090",
+        "instances": "default"
+    },
+    {
+        "id": "60bb8b1d404d27e0",
+        "type": "YAMCS",
+        "z": "bafd1fad12fa5e2a",
+        "name": "",
+        "server": "bc4f76e611439ce9",
+        "command": 1,
+        "x": 500,
+        "y": 260,
+        "wires": [
+            [
+                "e638d695a95355b2"
+            ]
+        ]
+    },
+    {
+        "id": "cc8c7af8d36ffae3",
+        "type": "inject",
+        "z": "bafd1fad12fa5e2a",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 200,
+        "y": 260,
+        "wires": [
+            [
+                "60bb8b1d404d27e0"
+            ]
+        ]
+    },
+    {
+        "id": "e638d695a95355b2",
+        "type": "debug",
+        "z": "bafd1fad12fa5e2a",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 260,
+        "wires": []
+    }
+]

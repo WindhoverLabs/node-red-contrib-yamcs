@@ -21,17 +21,18 @@
 
 
 <script id="yamcs-get-parameter" type="text/x-handlebars-template">
-   <label for="node-get-parameter-id"><i class="fa fa-server"></i> ID</label>
-   <input type="text" id="node-get-parameter-id" placeholder="" list="node-get-parameter-id-list">
-   <datalist id="node-get-parameter-id-list">
+   <label for="node-get-parameter-name"><i class="fa fa-server"></i> Parameter</label>
+   <input type="text" id="node-get-parameter-name" placeholder="" list="node-get-parameter-name-list">
+   <datalist id="node-get-parameter-name-list">
    </datalist>
 
-
-
     <script>
-        $('#node-get-parameter-id').on('input', function() {
+        $('#node-get-parameter-name').on('input', function() {
+            var server = RED.nodes.node($('#node-input-server').val()).ip;
+            var port = RED.nodes.node($('#node-input-server').val()).port;
+            var instance = RED.nodes.node($('#node-input-server').val()).instance;
             if(this.value.length >= 0) {
-	            getParameters(this.value, "localhost", 8090, "fsw", null);
+	            getParameters(this.value, server, port, instance, null);
             };
         });
 
@@ -95,7 +96,7 @@
                         }
                     }
 
-                    $('#node-get-parameter-id-list').html(paramOptions);
+                    $('#node-get-parameter-name-list').html(paramOptions);
 	            }
             });
             xmlHttp.open( "GET", url);
@@ -142,9 +143,9 @@
         defaults: {
             name: {value:""},
             server: {type:"yamcsconfig", required: true },
-            command: {value:1, required: true },
+            param: {value:"", required: true },
         },
-        inputs:1,
+        inputs:2,
         outputs:1,
         icon: "bridge.png",
         label: function() {
@@ -175,7 +176,12 @@
         <input type="text" id="node-input-server" placeholder="">
     </div>
 
-	<div class="form-row">
+    <div class="form-row">
+        <label for="node-input-param"><i class="fa fa-dot-circle-o"></i> Parameter</label>
+        <input type="text" id="node-input-param" placeholder="">
+    </div>
+
+	<!--<div class="form-row">
         <label for="node-input-command"><i class="fa fa-dot-circle-o"></i> Command</label>
         <select id="node-input-command">
            <option value="1">GetInstances</option>
@@ -219,7 +225,8 @@
 	                console.log("Illegal selection");
                 }
             }
-        });  
+        });
+    -->  
     </script>
 </script>
 

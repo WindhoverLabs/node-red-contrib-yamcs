@@ -19,18 +19,21 @@ module.exports = function (RED) {
             this.error(RED._('missing client config'));
             return;
         }
-
+        
         let {username, password, instance, ip, port} = nodeServer;
         let {command} = config;
 
         const server = new yamcs.Server(ip, port, instance);
-
-        server.getParameters(instance, '/cfs/cpd/core/cfe/cfe_es', null, function (err, result) {
-	        //console.log(result);
-        });
+        
+        server.SubscribeParameters(config.param, function(data) {
+	        var msg = {'_msgId': RED.util.generateId()};
+	        msg.payload = data;
+	        node.send(msg);
+	        node.status(STATUS_OK);
+        });        
+        
 
         this.on('input', function (msg) {
-
             if (msg.payload.command != null) {
                 command = msg.payload.command;
             } else {
@@ -116,7 +119,6 @@ module.exports = function (RED) {
         this.instance = n.instance;
         this.username = this.credentials.username;
         this.password = this.credentials.password;
-
     }
 
     
