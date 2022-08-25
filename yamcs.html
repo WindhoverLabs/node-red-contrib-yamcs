@@ -86,14 +86,14 @@
     </div>
 
     <div class="form-row">
-        <label for="node-input-param"><i class="fa fa-server"></i> Parameter</label>
-        <input type="text" id="node-input-param" placeholder="" list="node-input-param-list">
-        <datalist id="node-input-param-list">
+        <label for="node-input-cmd"><i class="fa fa-server"></i> Parameter</label>
+        <input type="text" id="node-input-cmd" placeholder="" list="node-input-cmd-list">
+        <datalist id="node-input-cmd-list">
         </datalist>
     </div>
 
     <script>
-        $('#node-input-param').on('input', function() {
+        $('#node-input-cmd').on('input', function() {
             var server = RED.nodes.node($('#node-input-server').val()).ip;
             var port = RED.nodes.node($('#node-input-server').val()).port;
             var instance = RED.nodes.node($('#node-input-server').val()).instance;
@@ -104,7 +104,7 @@
 
 
         function getCommands(searchText, address, port, instance, continuationToken) {
-            var parameters = {};
+            var commands = {};
             var url = "http://" + address + ":" + port + "/api/mdb/" + instance + "/commands?searchMembers=true&q=" + searchText;
 
             if(continuationToken !== null) {
@@ -114,8 +114,28 @@
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.addEventListener("load", function () {
 	            var jsonObject = JSON.parse(this.responseText);
-	            
-                console.log(jsonObject);
+	            commands = Object.assign(commands, jsonObject);
+                if(jsonObject.hasOwnProperty('continuationToken')) {
+		            getCommands(searchText, address, port, instance, jsonObject.continuationToken);
+	            } else {
+		            var cmdNames = [];
+                    if(commands.hasOwnProperty("commands")) {
+                        for(let command of commands.commands) {
+	                        if(command.hasOwnProperty("qualifiedName")) {
+	                            cmdNames.push(command.qualifiedName);
+                            }
+                        }
+                    }
+ 
+                    var cmdOptions = "";
+                    for (var i = 0; i < cmdNames.length; i++) {
+	                    if(cmdNames[i].startsWith(searchText)) {
+		                    cmdOptions = cmdOptions + "<option value='" + cmdNames[i] + "'>";
+                        }
+                    }
+
+                    $('#node-input-cmd-list').html(cmdOptions);
+	            }
             });
             xmlHttp.open( "GET", url);
             xmlHttp.send( null );
