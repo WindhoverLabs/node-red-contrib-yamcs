@@ -21,6 +21,73 @@ module.exports = function (RED) {
         }
         
         let {username, password, instance, ip, port} = nodeServer;
+
+        const server = new yamcs.Server(ip, port, instance);
+        
+        server.SubscribeParameters(config.param, function(data) {
+	        var msg = {'_msgId': RED.util.generateId()};
+	        msg.payload = data;
+	        node.send(msg);
+	        node.status(STATUS_OK);
+        });        
+        
+
+        this.on('input', function (msg) {
+
+            if (msg.payload.instance != null) {
+                instance = msg.payload.instance;
+            } else {
+                instance = nodeServer.instance;
+            }
+
+            
+            //server.login(username, password, (err, data) => {
+
+            //    if (err) {
+            //        console.log('ERROR: ' + data);
+            //        node.status({
+            //            fill: "red",
+            //            shape: "dot",
+            //            text: data
+            //        });
+            //        return;
+            //    }
+
+
+            //});
+
+            function handleDataCallback(err, data) {
+                if (err) {
+                    console.log('ERROR: ' + err.message);
+                    msg.error = err.message;
+                    node.send(msg);
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: err.message
+                    });
+    
+                } else {
+                    //server.logout();
+                    msg.payload = data;
+                    node.send(msg);
+                    node.status(STATUS_OK);
+                }
+            }
+        });
+    }
+
+    function YamcsCommandNode(config) {
+        RED.nodes.createNode(this, config);
+        const node = this;
+
+        var nodeServer =  RED.nodes.getNode(config.server);
+        if(!nodeServer) {
+            this.error(RED._('missing client config'));
+            return;
+        }
+        
+        let {username, password, instance, ip, port} = nodeServer;
         let {command} = config;
 
         const server = new yamcs.Server(ip, port, instance);
@@ -129,5 +196,7 @@ module.exports = function (RED) {
         }
     });
 
-    RED.nodes.registerType("YAMCS", YamcsNode);
+    RED.nodes.registerType("yamcs-parameter", YamcsNode);
+    
+    RED.nodes.registerType("yamcs-command", YamcsCommandNode);
 };

@@ -20,14 +20,185 @@
 </script>
 
 
-<script id="yamcs-get-parameter" type="text/x-handlebars-template">
-   <label for="node-get-parameter-name"><i class="fa fa-server"></i> Parameter</label>
-   <input type="text" id="node-get-parameter-name" placeholder="" list="node-get-parameter-name-list">
-   <datalist id="node-get-parameter-name-list">
-   </datalist>
+
+<script type="text/x-red" data-template-name="yamcsconfig">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-ip"><i class="fa fa-globe"></i> Server</label>
+        <input class="input-append-left" type="text" id="node-config-input-ip" placeholder="IP Address" style="width: 40%;" >
+        <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
+        <input type="text" id="node-config-input-port" placeholder="Port" style="width:45px">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-instance"><i class="fa fa-list"></i> Instance</label>
+        <input type="text" id="node-config-input-instance" placeholder="Instance Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
+        <input type="text" id="node-config-input-username" placeholder="Username">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
+        <input type="password" id="node-config-input-password" placeholder="Password">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="yamcsconfig">
+    <p>Shared configuration for the YAMCS servers</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('yamcs-command',{
+        category: 'input',
+        color: '#C0DEED',
+        defaults: {
+            name: {value:"YAMCS Command"},
+            server: {type:"yamcsconfig", required: true },
+            command: {value:"", required: true },
+            param: {value:"", required: true },
+        },
+        inputs:1,
+        outputs:0,
+        icon: "bridge.png",
+        label: function() {
+            if(this.name)
+            {
+                return this.name;
+            }
+        }
+    });
+</script>
+
+
+
+<script type="text/x-red" data-template-name="yamcs-command">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+	<div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-param"><i class="fa fa-server"></i> Parameter</label>
+        <input type="text" id="node-input-param" placeholder="" list="node-input-param-list">
+        <datalist id="node-input-param-list">
+        </datalist>
+    </div>
 
     <script>
-        $('#node-get-parameter-name').on('input', function() {
+        $('#node-input-param').on('input', function() {
+            var server = RED.nodes.node($('#node-input-server').val()).ip;
+            var port = RED.nodes.node($('#node-input-server').val()).port;
+            var instance = RED.nodes.node($('#node-input-server').val()).instance;
+            if(this.value.length >= 0) {
+	            getCommands(this.value, server, port, instance, null);
+            };
+        });
+
+
+        function getCommands(searchText, address, port, instance, continuationToken) {
+            var parameters = {};
+            var url = "http://" + address + ":" + port + "/api/mdb/" + instance + "/commands?searchMembers=true&q=" + searchText;
+
+            if(continuationToken !== null) {
+                url += "&next=" + continuationToken;	
+            }
+
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.addEventListener("load", function () {
+	            var jsonObject = JSON.parse(this.responseText);
+	            
+                console.log(jsonObject);
+            });
+            xmlHttp.open( "GET", url);
+            xmlHttp.send( null );
+        }
+
+        $('#node-input-command').on('change', function() {
+            $('#node-input-args').html('');
+            switch(this.value) {
+	            case "1": {
+		            $('#node-input-args').html('Hello');
+		            break;
+                }
+
+                case "2": {
+                    // Retrieve the template data from the HTML (jQuery is used here).
+                    var template = $('#yamcs-get-parameter').html();
+
+                    // Compile the template data into a function
+                    var templateScript = Handlebars.compile(template);
+
+                    var context = { "name" : "Ritesh Kumar", "occupation" : "developer" };
+
+                    // html = 'My name is Ritesh Kumar. I am a developer.'
+                    var html = templateScript(context);
+
+                    // Insert the HTML code into the page
+                    $('#node-input-args').html(html);
+
+
+	                break;
+                }
+
+                default: {
+	                console.log("Illegal selection");
+                }
+            }
+        });
+    </script>
+</script>
+
+
+
+<script type="text/javascript">
+    RED.nodes.registerType('yamcs-parameter',{
+        category: 'output',
+        color: '#C0DEED',
+        defaults: {
+            name: {value:"YAMCS Parameter"},
+            server: {type:"yamcsconfig", required: true },
+            param: {value:"", required: true },
+        },
+        inputs:0,
+        outputs:1,
+        icon: "bridge.png",
+        label: function() {
+            if(this.name)
+            {
+                return this.name;
+            }
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="yamcs-parameter">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+	<div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-param"><i class="fa fa-server"></i> Parameter</label>
+        <input type="text" id="node-input-param" placeholder="" list="node-input-param-list">
+        <datalist id="node-input-param-list">
+        </datalist>
+    </div>
+
+    <script>
+        $('#node-input-param').on('input', function() {
             var server = RED.nodes.node($('#node-input-server').val()).ip;
             var port = RED.nodes.node($('#node-input-server').val()).port;
             var instance = RED.nodes.node($('#node-input-server').val()).instance;
@@ -96,149 +267,24 @@
                         }
                     }
 
-                    $('#node-get-parameter-name-list').html(paramOptions);
+                    $('#node-input-param-list').html(paramOptions);
 	            }
             });
             xmlHttp.open( "GET", url);
             xmlHttp.send( null );
         }
-
     </script>
 </script>
 
-
-<script type="text/x-red" data-template-name="yamcsconfig">
-    <div class="form-row">
-        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-config-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-ip"><i class="fa fa-globe"></i> Server</label>
-        <input class="input-append-left" type="text" id="node-config-input-ip" placeholder="IP Address" style="width: 40%;" >
-        <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> Port</label>
-        <input type="text" id="node-config-input-port" placeholder="Port" style="width:45px">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-instance"><i class="fa fa-list"></i> Instance</label>
-        <input type="text" id="node-config-input-instance" placeholder="Instance Name">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-username"><i class="fa fa-user"></i> Username</label>
-        <input type="text" id="node-config-input-username" placeholder="Username">
-    </div>
-    <div class="form-row">
-        <label for="node-config-input-password"><i class="fa fa-lock"></i> Password</label>
-        <input type="password" id="node-config-input-password" placeholder="Password">
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="yamcsconfig">
-    <p>Shared configuration for the YAMCS servers</p>
-</script>
-
-<script type="text/javascript">
-    RED.nodes.registerType('YAMCS',{
-        category: 'output',
-        color: '#C0DEED',
-        defaults: {
-            name: {value:""},
-            server: {type:"yamcsconfig", required: true },
-            param: {value:"", required: true },
-        },
-        inputs:2,
-        outputs:1,
-        icon: "bridge.png",
-        label: function() {
-            if(this.name)
-            {
-                return this.name;
-            }
-            switch(this.command.toString()){
-                case '1':
-                    return 'YAMCS: getInstances';
-                case '2':
-                    return 'YAMCS: getParameters';
-                default:
-                    return 'YAMCS';
-            }
-        }
-    });
-</script>
-
-<script type="text/x-red" data-template-name="YAMCS">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-
-	<div class="form-row">
-        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
-        <input type="text" id="node-input-server" placeholder="">
-    </div>
-
-    <div class="form-row">
-        <label for="node-input-param"><i class="fa fa-dot-circle-o"></i> Parameter</label>
-        <input type="text" id="node-input-param" placeholder="">
-    </div>
-
-	<!--<div class="form-row">
-        <label for="node-input-command"><i class="fa fa-dot-circle-o"></i> Command</label>
-        <select id="node-input-command">
-           <option value="1">GetInstances</option>
-           <option value="2">GetParameter</option>
-           <option value="3">GetParameters</option>
-        </select>
-        <div id="node-input-args">
-           123
-        </div>
-    </div>
-
-    <script>
-        $('#node-input-command').on('change', function() {
-            $('#node-input-args').html('');
-            switch(this.value) {
-	            case "1": {
-		            $('#node-input-args').html('Hello');
-		            break;
-                }
-
-                case "2": {
-                    // Retrieve the template data from the HTML (jQuery is used here).
-                    var template = $('#yamcs-get-parameter').html();
-
-                    // Compile the template data into a function
-                    var templateScript = Handlebars.compile(template);
-
-                    var context = { "name" : "Ritesh Kumar", "occupation" : "developer" };
-
-                    // html = 'My name is Ritesh Kumar. I am a developer.'
-                    var html = templateScript(context);
-
-                    // Insert the HTML code into the page
-                    $('#node-input-args').html(html);
-
-
-	                break;
-                }
-
-                default: {
-	                console.log("Illegal selection");
-                }
-            }
-        });
-    -->  
-    </script>
-</script>
-
-<script type="text/x-red" data-help-name="YAMCS">
-    <p>Connects to a YAMCS server and query/control the YAMCS API.</p>
-    <p><code>msg.payload.command</code> is used to override the command selected in the node.<br> Example how to send a command from a function Node<br> <code>msg.payload = { command: "getInstances"};</code></p>
-    <p>Available Commands:</p>
-    <ul>
-            <li><code>GetInstances</code> : Site stats</li>
-    </ul>
-    <p>Special Commands: (No GUI)</p>
+<script type="text/x-red" data-help-name="yamcs-parameter">
+    <p>Subscribes to and receives parameters from a YAMCS server.</p>
 	<p>Returns all data in JSON parsable strings/objects</p>
-    <p>For more information see the <a href="https://github.com/mbenson1/node-red-contrib-yamcs" target="_blank">GitHub</a> site.</p>
+    <p>For more information see the <a href="https://github.com/windhoverlabs/node-red-contrib-yamcs" target="_blank">GitHub</a> site.</p>
+    <p>Version 0.2.0</p>
+</script>
+
+<script type="text/x-red" data-help-name="yamcs-commands">
+    <p>Sends messages to a YAMCS server to be packaged and transmitted as commands.</p>
+    <p>For more information see the <a href="https://github.com/windhoverlabs/node-red-contrib-yamcs" target="_blank">GitHub</a> site.</p>
     <p>Version 0.2.0</p>
 </script>

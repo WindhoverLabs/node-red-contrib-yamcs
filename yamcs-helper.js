@@ -47,7 +47,7 @@ var Server = function (hostname, port, instance) {
 		    if(msg.data !== undefined) {
 			    if(msg.data.mapping !== undefined) {
 				    for (const [key, value] of Object.entries(msg.data.mapping)) {
-				         console.log('Adding mapping ' + key + ':' + value.name + ' to ' + _self.subscribers[value.name]);
+				         console.log('Adding mapping ' + key + ':' + value.name);
 					    _self.mapping[parseInt(key)] = _self.subscribers[value.name];
 					}
 				}
@@ -150,9 +150,7 @@ var Server = function (hostname, port, instance) {
 	    }	       
 	};
 	
-	_self.client.onopen = function(connection) {
-		console.log('connect');
-		
+	_self.client.onopen = function(connection) {		
 		for(var i = 0; i < _self.deferredRequests.length; ++i) {
 			_self.SendSubscriptionRequest(_self.deferredRequests[i]['paramName'], _self.deferredRequests[i]['callback']);
 		}
